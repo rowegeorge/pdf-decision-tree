@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Decision Tree — Bellevue College</title>
+<style>
+  :root {
+    --ink: #1a2230;
+    --ink-soft: #4a5568;
+    --paper: #fbfaf7;
+    --panel: #ffffff;
+    --rule: #d9d4c8;
+    --accent: #1f5c4d;        /* deep evergreen */
+    --accent-soft: #e8f0ec;
+    --yes: #1f5c4d;
+    --no: #8a5a2b;            /* warm clay */
+    --no-soft: #f3ece2;
+    --link: #1f5c4d;
+    --focus: #c8801f;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    line-height: 1.6;
+    font-size: 17px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px 96px; }
+
+  /* Header */
+  header.masthead {
+    border-bottom: 2px solid var(--ink);
+    padding: 48px 0 28px;
+    margin-bottom: 8px;
+  }
+  .eyebrow {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-size: 40px;
+    line-height: 1.1;
+    margin: 0 0 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .lede { font-size: 18px; color: var(--ink-soft); margin: 0 0 6px; max-width: 60ch; }
+  .lede strong { color: var(--ink); }
+
+  /* Start / TOC */
+  .start {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--accent);
+    padding: 22px 26px;
+    margin: 36px 0;
+  }
+  .start h2 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 14px; font-weight: 700;
+  }
+  .start ol { margin: 0; padding-left: 1.4em; }
+  .start li { margin: 6px 0; }
+  .start a { color: var(--link); text-decoration: none; }
+  .start a:hover { text-decoration: underline; }
+
+  /* Question blocks */
+  .q {
+    border-top: 1px solid var(--rule);
+    padding: 40px 0 8px;
+    scroll-margin-top: 16px;
+  }
+  .q-num {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+    color: var(--accent); display: block; margin-bottom: 8px;
+  }
+  .q h2 {
+    font-size: 23px; line-height: 1.25; margin: 0 0 20px; font-weight: 600;
+  }
+  .q h2 .sub { color: var(--no); }
+
+  /* Result table */
+  table.routes {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 8px;
+  }
+  table.routes th {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    text-align: left; padding: 8px 16px; width: 50%;
+    border-bottom: 2px solid var(--ink);
+  }
+  table.routes th.yes { color: var(--yes); }
+  table.routes th.no { color: var(--no); }
+  table.routes td {
+    vertical-align: top;
+    padding: 16px;
+    font-size: 15.5px;
+    line-height: 1.55;
+    border-bottom: 1px solid var(--rule);
+  }
+  table.routes td.yes { background: var(--accent-soft); }
+  table.routes td.no { background: var(--no-soft); }
+  table.routes .label {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700; font-size: 12px; letter-spacing: 0.06em;
+    text-transform: uppercase; display: block; margin-bottom: 6px;
+  }
+  table.routes .yes .label { color: var(--yes); }
+  table.routes .no .label { color: var(--no); }
+  td a { color: var(--link); font-weight: 600; }
+  td .goto {
+    display: inline-block; margin-top: 4px;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px; font-weight: 700; text-decoration: none;
+    color: var(--accent);
+  }
+  td .goto::after { content: " →"; }
+  td .goto:hover { text-decoration: underline; }
+
+  .note {
+    font-size: 14px; color: var(--ink-soft);
+    border-left: 3px solid var(--rule);
+    padding: 4px 0 4px 16px; margin: 10px 0 0;
+  }
+  .note strong { color: var(--ink); }
+
+  a { color: var(--link); }
+  a:focus-visible, .goto:focus-visible, td a:focus-visible {
+    outline: 3px solid var(--focus); outline-offset: 2px;
+  }
+
+  .backtop {
+    display: inline-block; margin-top: 14px;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-soft); text-decoration: none;
+  }
+  .backtop:hover { color: var(--accent); }
+
+  footer {
+    border-top: 2px solid var(--ink);
+    margin-top: 56px; padding-top: 24px;
+    font-size: 14px; color: var(--ink-soft);
+  }
+  footer h2 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 10px; font-weight: 700;
+  }
+  footer ul { margin: 0; padding-left: 1.2em; }
+  footer li { margin: 4px 0; }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 30px; }
+    table.routes, table.routes tbody, table.routes tr, table.routes td, table.routes th { display: block; width: 100%; }
+    table.routes th.no { display: none; }
+    table.routes th.yes { border: none; padding-bottom: 0; }
+  }
+
+  /* ---------- Interactive layer (only active when JS is enabled) ---------- */
+  .js-on .static-only { display: none; }
+  .no-js .interactive-only { display: none; }
+  .interactive-only { display: none; }
+  .js-on .interactive-only { display: block; }
+
+  /* Mode toggle */
+  .modebar {
+    display: flex; flex-wrap: wrap; gap: 12px 10px; align-items: center;
+    margin: 28px 0 4px; padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .modebar .spacer { flex: 1 1 auto; }
+  .btn {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--panel); color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 0;
+    padding: 9px 16px; cursor: pointer; line-height: 1;
+  }
+  .btn:hover { background: var(--accent-soft); }
+  .btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .btn.quiet { color: var(--ink-soft); border-color: var(--rule); background: transparent; }
+  .btn.quiet:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Progress */
+  .progress {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-right: 24px;
+  }
+
+  /* Transcript steps */
+  #transcript { margin-top: 4px; }
+  .step {
+    border-top: 1px solid var(--rule);
+    padding: 32px 0 8px;
+    scroll-margin-top: 16px;
+  }
+  .step:first-child { border-top: none; }
+  .step .q-num { margin-bottom: 8px; }
+  .step h2 {
+    font-size: 23px; line-height: 1.25; margin: 0 0 20px; font-weight: 600;
+  }
+  .step h2 .sub { color: var(--no); }
+
+  /* Answer buttons */
+  .choices { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 4px; }
+  .choice {
+    flex: 1 1 200px;
+    text-align: left;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px; font-weight: 700;
+    padding: 14px 18px; cursor: pointer; line-height: 1.3;
+    border: 1px solid var(--rule);
+    background: var(--panel); color: var(--ink);
+  }
+  .choice .hint {
+    display: block; font-weight: 400; font-size: 13px;
+    color: var(--ink-soft); margin-top: 4px; letter-spacing: 0;
+  }
+  .choice.yes:hover, .choice.yes:focus-visible { border-color: var(--yes); background: var(--accent-soft); color: var(--yes); }
+  .choice.no:hover,  .choice.no:focus-visible  { border-color: var(--no);  background: var(--no-soft);  color: var(--no); }
+  .choice:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  /* Answered state */
+  .answered .choices { display: none; }
+  .answered .step-controls { display: none; }
+
+  /* Inline controls beneath the active question */
+  .step-controls {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-top: 22px;
+  }
+  .yourpick {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; display: inline-block;
+    padding: 5px 12px; margin-bottom: 14px;
+  }
+  .yourpick.yes { background: var(--accent-soft); color: var(--yes); }
+  .yourpick.no  { background: var(--no-soft);  color: var(--no); }
+
+  /* Result panel */
+  .result {
+    border-left: 4px solid var(--accent);
+    background: var(--panel);
+    padding: 18px 22px;
+    font-size: 15.5px; line-height: 1.55;
+    margin: 0 0 6px;
+  }
+  .result.is-no { border-left-color: var(--no); }
+  .result .label {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700; font-size: 12px; letter-spacing: 0.06em;
+    text-transform: uppercase; display: block; margin-bottom: 8px;
+    color: var(--accent);
+  }
+  .result.is-no .label { color: var(--no); }
+  .result p.note:last-child { margin-bottom: 0; }
+
+  /* Final panel */
+  .done {
+    border-top: 2px solid var(--ink);
+    margin-top: 32px; padding-top: 22px;
+  }
+  .done h2 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 10px; font-weight: 700;
+  }
+  .done-controls {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-top: 16px;
+  }
+
+  @media print {
+    .modebar, .choices, .backtop { display: none !important; }
+    .js-on .static-only { display: block; }
+  }
+
+  @media (max-width: 560px) {
+    .choice { flex: 1 1 100%; }
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Bellevue College · Accessible Course Materials</p>
+    <h1>PDF Decision Tree</h1>
+    <p class="lede">This guide helps you choose the best way to share and maintain accessible course materials. When possible, use <strong>accessible web pages and document formats rather than PDFs</strong> — they are far easier to make accessible and to keep current.</p>
+    <p class="lede">Have an inaccessible PDF and aren't sure what to do next? Start with Question 1 and follow the route that fits.</p>
+  </header>
+
+  <nav class="start" aria-label="Jump to a question" id="allquestions">
+    <h2>Jump to a question</h2>
+    <ol>
+      <li><a href="#q1">Does the PDF contain essential content tied to your course outcomes?</a></li>
+      <li><a href="#q2">Do you know who owns and/or created the PDF?</a></li>
+      <li><a href="#q3">Are you or Bellevue College the copyright owner?</a>
+        <ol style="list-style:lower-alpha">
+          <li><a href="#q3a">Is the PDF owned by a federal or state government agency?</a></li>
+          <li><a href="#q3b">Is the document a scanned copy of a resource?</a>
+            <ol style="list-style:decimal">
+              <li><a href="#q3b1">Does the scan contain selectable text, or is it image-only?</a></li>
+            </ol>
+          </li>
+          <li><a href="#q3c">Is the document in the public domain or covered by fair use?</a></li>
+        </ol>
+      </li>
+      <li><a href="#q4">Do you have access to the original source file?</a></li>
+      <li><a href="#q5">Does the PDF content need to be updated regularly?</a></li>
+      <li><a href="#q6">Can the content be redesigned on a Canvas page (or other format)?</a></li>
+      <li><a href="#q7">Is there an equivalent web resource available?</a></li>
+      <li><a href="#q8">Does the PDF contain fillable form fields?</a>
+        <ol style="list-style:lower-alpha">
+          <li><a href="#q8a">Did someone at BC create the form?</a></li>
+        </ol>
+      </li>
+      <li><a href="#q9">Does the PDF include complex visual design elements?</a></li>
+    </ol>
+  </nav>
+
+  <!-- Q1 -->
+  <section class="q" id="q1">
+    <span class="q-num">Question 1</span>
+    <h2>Does the PDF contain essential content that aligns with your course outcomes?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes</span>Continue to the ownership question.<br><a class="goto" href="#q2">Question 2</a></td>
+          <td class="no"><span class="label">No — Result</span>Remove the PDF from your course until you've made your other, more essential materials accessible. If it no longer aligns with your course outcomes, consider archiving it instead.</td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q2 -->
+  <section class="q" id="q2">
+    <span class="q-num">Question 2 · Ownership</span>
+    <h2>Do you know who owns and/or created the PDF or its content?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes</span>Continue to the copyright question.<br><a class="goto" href="#q3">Question 3</a></td>
+          <td class="no"><span class="label">No — Result</span>Treat the document as third-party content until its source is confirmed. Without knowing who created or owns it, you cannot determine whether you have the right to remediate, post, or adapt it. Check the file's document properties and any headers, footers, or cover pages for a publisher, author, or institution. If the source is still unclear, <strong>contact the BC Library Media Center</strong> for help identifying the original work and locating an accessible, properly licensed version you can link to instead. <a href="mailto:elearning@bellevuecollege.edu">Interactive eLearning</a> can help once the source is known.
+            <p class="note">Do not remediate or redistribute a document of unknown origin. Linking to a verified published version is almost always the faster and safer path.</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q3 -->
+  <section class="q" id="q3">
+    <span class="q-num">Question 3 · Copyright</span>
+    <h2>Are you or Bellevue College the copyright owner?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes</span>You have the right to adapt and remediate the document. Continue.<br><a class="goto" href="#q4">Question 4</a></td>
+          <td class="no"><span class="label">No</span>You'll need to work through a few ownership and copyright checks first.<br><a class="goto" href="#q3a">Question 3a</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q3a -->
+  <section class="q" id="q3a">
+    <span class="q-num">Question 3a · Copyright</span>
+    <h2><span class="sub">Copyright ·</span> Is the PDF owned by a federal or state government agency (e.g., HR employment files, tax forms, legal documents)?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes — Result</span>Keep the PDF as is. Government agencies are responsible for the accessibility of their own documents. You may need to provide an <strong>accommodation</strong> if a required form is not accessible to an individual. Where possible, link to the version hosted by the agency rather than uploading your own copy.</td>
+          <td class="no"><span class="label">No</span>Continue.<br><a class="goto" href="#q3b">Question 3b</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q3b -->
+  <section class="q" id="q3b">
+    <span class="q-num">Question 3b · Copyright</span>
+    <h2><span class="sub">Copyright ·</span> Is the document a scanned copy of a resource (an article, book chapter, textbook content, etc.)?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes</span>Continue to the scan sub-question to determine how to handle it.<br><a class="goto" href="#q3b1">Question 3b.1</a></td>
+          <td class="no"><span class="label">No</span>Continue.<br><a class="goto" href="#q4">Question 4</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q3b.1 -->
+  <section class="q" id="q3b1">
+    <span class="q-num">Question 3b.1 · Scanned document</span>
+    <h2><span class="sub">Scanned document ·</span> Does the scan contain real, selectable text, or is it image-only?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Has selectable text</th><th class="no" scope="col">Image-only scan</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Selectable text — Result</span>First, try to find an accessible web-based version you can link to instead — search the web or the <strong>BC Library Media Center</strong> resources (books and databases). If none exists, export the file to Microsoft Word via Adobe Acrobat (.docx) and remediate it in Word, which is usually simpler than remediating the PDF directly.<br><span class="note" style="display:block;margin-top:10px;">Before remediating or posting a copy you didn't author, confirm you have the right to do so. <a class="goto" href="#q3c">Check copyright (Question 3c)</a></span></td>
+          <td class="no"><span class="label">Image-only — Result</span>An image-only scan has no machine-readable text and is not accessible to a screen reader. Look first for an accessible published version through the <strong>BC Library Media Center</strong>. If none is available, the scan must be run through OCR and fully remediated — <a href="mailto:elearning@bellevuecollege.edu">contact Interactive eLearning</a> for help.<br><span class="note" style="display:block;margin-top:10px;">Before remediating or posting a copy you didn't author, confirm you have the right to do so. <a class="goto" href="#q3c">Check copyright (Question 3c)</a></span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note"><strong>If no web-based version can be found</strong> and you have competing concerns (copyright, low-cost availability to students, single-source historical artifacts), <a href="mailto:elearning@bellevuecollege.edu">contact Interactive eLearning</a> before proceeding.</p>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q3c -->
+  <section class="q" id="q3c">
+    <span class="q-num">Question 3c · Copyright</span>
+    <h2><span class="sub">Copyright ·</span> Is the document in the public domain or covered by fair use?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No / Not sure</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes — Result</span>If the document is in the <a href="https://guides.library.cornell.edu/copyright/publicdomain" title="active">public domain</a> or your use meets the <a href="https://bellevuec-my.sharepoint.com/:w:/g/personal/karen_diller_bellevuecollege_edu/IQBkPZVljuYqRbOefB-vezIpAVzkZEVf245KwyZErHbC1JA?e=C5Jj3A" title="active">fair use guidelines</a>, you may proceed. Continue.<br><a class="goto" href="#q4">Question 4</a>
+            <p class="note"><strong>Note:</strong> the public domain and fair use resource links are pending — they will be updated once the accessible versions are finalized.</p>
+          </td>
+          <td class="no"><span class="label">No / Not sure — Result</span>You will need to obtain copyright permission before using or remediating the document. Follow the steps in <a href="https://libraries.colorado.edu/copyright-information/obtain-copyright-permission" title="active">Getting Copyright Permission</a> — this generally means identifying the rights holder (often the publisher rather than the author), submitting a written request that describes exactly how the material will be used, and keeping a record of the permission you receive. Once permission is granted, you can proceed with remediation.
+            <p class="note"><strong>Note:</strong> the "Getting Copyright Permission" link is pending — it will be updated once the accessible version is finalized. If you're unsure whether you need permission or how to request it, <a href="mailto:elearning@bellevuecollege.edu">contact Interactive eLearning</a> or the <strong>BC Library Media Center</strong>.</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q4 -->
+  <section class="q" id="q4">
+    <span class="q-num">Question 4</span>
+    <h2>Do you have access to the original source file (Word, PowerPoint, or other)?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes — Result</span>Replace the PDF with the original file. You'll still need to make the document accessible, but these formats are easier to work with — and they can be saved in a read-only format if you're concerned about students editing them. If it's a text-based document, consider recreating it on a Canvas page instead.</td>
+          <td class="no"><span class="label">No</span>Continue.<br><a class="goto" href="#q5">Question 5</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q5 -->
+  <section class="q" id="q5">
+    <span class="q-num">Question 5</span>
+    <h2>Does the PDF content need to be updated regularly?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes — Result</span>Convert it to a format better suited to frequent edits, such as a Word document or a Canvas page. Editing a PDF can be clunky, and each edit can compromise the accessibility formatting — meaning it must be re-checked and fixed every time you make a change.</td>
+          <td class="no"><span class="label">No</span>Continue.<br><a class="goto" href="#q6">Question 6</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q6 -->
+  <section class="q" id="q6">
+    <span class="q-num">Question 6</span>
+    <h2>Can the content be redesigned on a Canvas page or in another instructional format?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes — Result</span>If there's an opportunity to improve the content by redesigning it — as a Canvas page, an interactive activity, or microlearning — take it. <a href="mailto:elearning@bellevuecollege.edu">Reach out to Interactive eLearning</a> for help turning passive reading or studying into more interactive instructional activities.</td>
+          <td class="no"><span class="label">No</span>Continue.<br><a class="goto" href="#q7">Question 7</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note">Consider both whether the content <strong>can</strong> be moved (technically) and whether it <strong>should</strong> be (copyright, licensing). If you're unsure, <a href="mailto:elearning@bellevuecollege.edu">contact Interactive eLearning</a>.</p>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q7 -->
+  <section class="q" id="q7">
+    <span class="q-num">Question 7</span>
+    <h2>Is there an equivalent web resource available?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes — Result</span>Link to the web resource using a persistent link within your course. Your content may be available free online, through the <strong>BC Library Media Center</strong> databases, or from a publisher (ePub or eBook version). Always use descriptive, accessible link text.
+            <p class="note">Instead of a bare URL like <em>https://youtu.be/5MuIMqhT8DM</em>, write: <strong>VIDEO: Watch "Sleep Is Your Superpower" (TED Talk by Matt Walker)</strong>.</p>
+          </td>
+          <td class="no"><span class="label">No</span>Continue.<br><a class="goto" href="#q8">Question 8</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q8 -->
+  <section class="q" id="q8">
+    <span class="q-num">Question 8</span>
+    <h2>Does the PDF contain fillable form fields?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes</span>Continue to the form sub-question.<br><a class="goto" href="#q8a">Question 8a</a></td>
+          <td class="no"><span class="label">No</span>Continue.<br><a class="goto" href="#q9">Question 9</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q8a -->
+  <section class="q" id="q8a">
+    <span class="q-num">Question 8a · Forms</span>
+    <h2><span class="sub">Form ·</span> Did you or someone internally at BC create this form?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes — Result</span>Recreate the form in an accessible format using a college-approved tool — <strong>Qualtrics</strong> or <strong>Microsoft Forms</strong>.
+            <p class="note">If a paper form must be kept as is, contact the <strong>Disability Resource Center (DRC)</strong> for support from a remediation specialist, and provide an accommodation for any individual who needs one.</p>
+          </td>
+          <td class="no"><span class="label">No — Result</span>If this is an external form owned by a federal or state government agency (e.g., HR employment files, tax forms, legal documents), keep the PDF as is. You may need to provide an <strong>accommodation</strong> if the required form is not accessible to an individual.<br><a class="goto" href="#q9">Question 9</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <!-- Q9 -->
+  <section class="q" id="q9">
+    <span class="q-num">Question 9</span>
+    <h2>Does the PDF include visual design elements that make it difficult to remediate (complex graphs or charts, an infographic, a flyer, or a file created in another tool such as Adobe InDesign)?</h2>
+    <table class="routes">
+      <thead><tr><th class="yes" scope="col">Yes</th><th class="no" scope="col">No</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="yes"><span class="label">Yes — Result</span>Where the file was created in a design tool (Adobe InDesign, Adobe Express, or similar), use that tool's built-in accessibility features <em>before</em> exporting — it greatly reduces the remediation work needed later in Adobe Acrobat. For complex charts or infographics, make sure the same information is also available in an accessible text format. Need help? <a href="mailto:elearning@bellevuecollege.edu">Contact Interactive eLearning</a>.</td>
+          <td class="no"><span class="label">No — Result</span>The PDF can be remediated directly. Use Adobe Acrobat Pro to tag and check the document, or <a href="mailto:elearning@bellevuecollege.edu">contact Interactive eLearning</a> for support.</td>
+        </tr>
+      </tbody>
+    </table>
+    <a class="backtop" href="#top">↑ Back to top</a>
+  </section>
+
+  <footer id="contact">
+    <h2>Where to get help</h2>
+    <p>This decision tree doesn't cover every scenario. For anything not addressed here — or for help with redesigning, remediating, or finding accessible alternatives — <strong>contact Interactive eLearning</strong>.</p>
+    <ul>
+      <li><strong>Interactive eLearning</strong> — redesigning content, remediation support, general questions</li>
+      <li><strong>BC Library Media Center</strong> — finding accessible versions, persistent links, database resources</li>
+      <li><strong>Disability Resource Center (DRC)</strong> — accommodations and form remediation specialists</li>
+    </ul>
+    <p class="note">Adapted with reference to the PDF decision guides from the University of Missouri, University of Michigan, and Oregon State University.</p>
+  </footer>
+
+</div>
+<a id="top"></a>
+<script>
+(function () {
+  "use strict";
+
+  var root = document.documentElement;
+  root.classList.remove("no-js");
+  root.classList.add("js-on");
+
+  var START = "q1";
+
+  // ---- Read the static sections into a model -------------------------------
+  var model = {};
+  var order = [];
+
+  Array.prototype.forEach.call(
+    document.querySelectorAll("section.q[id]"),
+    function (sec) {
+      var id = sec.id;
+      var heading = sec.querySelector("h2");
+      var num = sec.querySelector(".q-num");
+      var ths = sec.querySelectorAll("table.routes th");
+      var tds = sec.querySelectorAll("table.routes td.yes, table.routes td.no");
+      if (!heading || tds.length === 0) return;
+
+      var answers = [];
+      Array.prototype.forEach.call(tds, function (td, i) {
+        var kind = td.classList.contains("yes") ? "yes" : "no";
+        var clone = td.cloneNode(true);
+
+        // The label span and the "goto" link are navigation chrome, not result copy.
+        var lbl = clone.querySelector(".label");
+        var labelText = lbl ? lbl.textContent.trim() : (kind === "yes" ? "Yes" : "No");
+        if (lbl) lbl.parentNode.removeChild(lbl);
+
+        var goes = null;
+        var goto = clone.querySelector("a.goto");
+        if (goto) {
+          goes = goto.getAttribute("href").replace("#", "");
+          // Drop the link and any bare "Continue." lead-in it trailed.
+          var wrap = goto.previousSibling;
+          goto.parentNode.removeChild(goto);
+          while (wrap && wrap.nodeType === 3 && !wrap.nodeValue.trim()) {
+            var prev = wrap.previousSibling;
+            wrap.parentNode.removeChild(wrap);
+            wrap = prev;
+          }
+          var brs = clone.querySelectorAll("br");
+          if (brs.length) {
+            var last = brs[brs.length - 1];
+            if (!last.nextSibling || !(last.nextSibling.textContent || "").trim()) {
+              last.parentNode.removeChild(last);
+            }
+          }
+        }
+
+        var body = clone.innerHTML.trim();
+        // Strip a lone "Continue." that only made sense as table copy.
+        var plain = clone.textContent.replace(/\s+/g, " ").trim();
+        if (/^Continue\.?$/i.test(plain)) body = "";
+
+        answers.push({
+          kind: kind,
+          // Column header carries the real wording for non Yes/No questions.
+          choice: (ths[i] ? ths[i].textContent.trim() : (kind === "yes" ? "Yes" : "No")),
+          label: labelText,
+          html: body,
+          next: goes
+        });
+      });
+
+      model[id] = {
+        id: id,
+        num: num ? num.textContent.trim() : "",
+        headingHTML: heading.innerHTML,
+        answers: answers
+      };
+      order.push(id);
+    }
+  );
+
+  // ---- Build the interactive shell ----------------------------------------
+  var nav = document.querySelector("nav.start");
+  if (!nav || !model[START]) return; // static page stands on its own
+
+  nav.classList.add("static-only");
+  Array.prototype.forEach.call(document.querySelectorAll("section.q"), function (s) {
+    s.classList.add("static-only");
+  });
+
+  var bar = document.createElement("div");
+  bar.className = "modebar interactive-only";
+  bar.innerHTML =
+    '<span class="progress" id="progress"></span>' +
+    '<span class="spacer"></span>' +
+    '<button type="button" class="btn quiet" id="backBtn">Go back</button>' +
+    '<button type="button" class="btn quiet" id="restartBtn">Start over</button>' +
+    '<button type="button" class="btn" id="allBtn">View all questions</button>';
+
+  var panel = document.createElement("div");
+  panel.className = "interactive-only";
+  panel.id = "interactive";
+  panel.innerHTML = '<div id="transcript"></div><div id="done"></div>';
+
+  nav.parentNode.insertBefore(bar, nav);
+  nav.parentNode.insertBefore(panel, nav);
+
+  var transcript = document.getElementById("transcript");
+  var doneBox = document.getElementById("done");
+  var progress = document.getElementById("progress");
+  var path = []; // [{id, answerIndex}]
+  var showingAll = false;
+
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+
+  function renderStep(qid, stepIndex) {
+    var q = model[qid];
+    var el = document.createElement("section");
+    el.className = "step";
+    el.id = "step-" + qid;
+    el.setAttribute("data-qid", qid);
+
+    var head =
+      '<span class="q-num">' + esc(q.num) + "</span>" +
+      "<h2>" + q.headingHTML + "</h2>";
+
+    var choices = '<div class="choices" role="group" aria-label="Choose an answer">';
+    q.answers.forEach(function (a, i) {
+      choices +=
+        '<button type="button" class="choice ' + a.kind + '" data-i="' + i + '">' +
+        esc(a.choice) +
+        "</button>";
+    });
+    choices += "</div>";
+
+    // Inline controls under the active question, so users don't scroll up to go back.
+    var controls = "";
+    if (stepIndex > 0) {
+      controls =
+        '<div class="step-controls">' +
+        '<button type="button" class="btn quiet js-back">Go back</button>' +
+        '<button type="button" class="btn quiet js-restart">Start over</button>' +
+        "</div>";
+    }
+
+    el.innerHTML = head + choices + controls;
+    transcript.appendChild(el);
+
+    Array.prototype.forEach.call(el.querySelectorAll(".choice"), function (btn) {
+      btn.addEventListener("click", function () {
+        answer(stepIndex, qid, parseInt(btn.getAttribute("data-i"), 10));
+      });
+    });
+    var backEl = el.querySelector(".js-back");
+    if (backEl) backEl.addEventListener("click", goBack);
+    var restartEl = el.querySelector(".js-restart");
+    if (restartEl) restartEl.addEventListener("click", restart);
+
+    return el;
+  }
+
+  function answer(stepIndex, qid, ai) {
+    path = path.slice(0, stepIndex);
+    path.push({ id: qid, ai: ai });
+    draw();
+    var next = model[qid].answers[ai].next;
+    var target, focusEl;
+    if (next) {
+      // Move to the next question.
+      target = document.getElementById("step-" + next);
+      focusEl = target ? target.querySelector("h2") : null;
+    } else {
+      // End of path: keep the result the user just received in view,
+      // not the "End of this path" message below it.
+      var steps = transcript.querySelectorAll(".step");
+      target = steps[steps.length - 1] || null;
+      focusEl = target ? target.querySelector("h2") : null;
+    }
+    if (target) {
+      target.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+      if (focusEl) { focusEl.setAttribute("tabindex", "-1"); focusEl.focus({ preventScroll: true }); }
+    }
+  }
+
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function draw() {
+    transcript.innerHTML = "";
+    doneBox.innerHTML = "";
+
+    var cursor = START;
+    var i = 0;
+
+    for (; i < path.length; i++) {
+      var stepQ = path[i].id;
+      var a = model[stepQ].answers[path[i].ai];
+      var el = renderStep(stepQ, i);
+      el.classList.add("answered");
+
+      var pick = document.createElement("span");
+      pick.className = "yourpick " + a.kind;
+      pick.textContent = "Your answer: " + a.choice;
+      el.appendChild(pick);
+
+      if (a.html) {
+        var res = document.createElement("div");
+        res.className = "result" + (a.kind === "no" ? " is-no" : "");
+        res.innerHTML = '<span class="label">' + esc(a.label) + "</span>" + a.html;
+        el.appendChild(res);
+      }
+      cursor = a.next;
+    }
+
+    if (cursor && model[cursor]) {
+      renderStep(cursor, path.length);
+    } else {
+      renderDone();
+    }
+    updateBar();
+  }
+
+  function renderDone() {
+    doneBox.innerHTML =
+      '<div class="done">' +
+      "<h2>End of this path</h2>" +
+      "<p>That's the guidance for the answers you gave. If your situation doesn't quite fit, " +
+      '<a href="mailto:elearning@bellevuecollege.edu">contact Interactive eLearning</a> — and see the help list below.</p>' +
+      '<div class="done-controls">' +
+      '<button type="button" class="btn quiet" id="doneBackBtn">Go back</button>' +
+      '<button type="button" class="btn" id="againBtn">Start over</button>' +
+      "</div>" +
+      "</div>";
+    var again = document.getElementById("againBtn");
+    if (again) again.addEventListener("click", restart);
+    var back = document.getElementById("doneBackBtn");
+    if (back) back.addEventListener("click", goBack);
+  }
+
+  function updateBar() {
+    var answered = path.length;
+    var atEnd = !!doneBox.innerHTML;
+    progress.textContent = atEnd
+      ? answered + " question" + (answered === 1 ? "" : "s") + " answered · complete"
+      : "Question " + (answered + 1);
+    document.getElementById("backBtn").disabled = answered === 0;
+    document.getElementById("restartBtn").disabled = answered === 0;
+  }
+
+  function restart() {
+    path = [];
+    draw();
+    var first = transcript.querySelector(".step h2");
+    document.getElementById("interactive").scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start"
+    });
+    if (first) { first.setAttribute("tabindex", "-1"); first.focus({ preventScroll: true }); }
+  }
+
+  function goBack() {
+    if (!path.length) return;
+    path.pop();
+    draw();
+    var steps = transcript.querySelectorAll(".step");
+    var last = steps[steps.length - 1];
+    if (last) {
+      last.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+      var h = last.querySelector("h2");
+      if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+    }
+  }
+
+  document.getElementById("backBtn").addEventListener("click", goBack);
+
+  document.getElementById("restartBtn").addEventListener("click", restart);
+
+  document.getElementById("allBtn").addEventListener("click", function () {
+    showingAll = !showingAll;
+    root.classList.toggle("js-on", !showingAll);
+    root.classList.toggle("no-js", showingAll);
+    this.textContent = showingAll ? "Back to guided mode" : "View all questions";
+    this.setAttribute("aria-pressed", showingAll ? "true" : "false");
+    if (showingAll) {
+      bar.classList.remove("interactive-only");
+    } else {
+      bar.classList.add("interactive-only");
+      bar.style.display = "";
+    }
+    (showingAll ? nav : document.getElementById("interactive"))
+      .scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+  });
+
+  // Keep the toggle usable while the static view is showing.
+  bar.classList.add("always");
+  draw();
+})();
+
+</script>
+</body>
+</html>
